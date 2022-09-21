@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.HashMap;
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     ImagesInterface service;
     TextView textView;
     private RecyclerView recyclerView;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
         textView = findViewById(R.id.showError);
         recyclerView = findViewById(R.id.recyclerView);
+        progressBar = findViewById(R.id.progressBar);
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.thecatapi.com/v1/images/") //https://api.thecatapi.com/v1/images/search?limit=100&page=11&order=Desc
                 .addConverterFactory(GsonConverterFactory.create())
@@ -58,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
                         parseRecyclerView(imagesList);
                     }else{
                         recyclerView.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.GONE);
                         textView.setVisibility(View.VISIBLE);
                         textView.setText("Something went Wrong : "+response.message());
                     }
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onFailure(Call<List<Images>> call, Throwable t) {
                     try{
                         recyclerView.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.GONE);
                         textView.setVisibility(View.VISIBLE);
                         textView.setText(t.getMessage());
                     } catch (Exception e) {
@@ -82,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
     private void parseRecyclerView(List<Images> imagesList) {
 
         try{
+            recyclerView.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.GONE);
+            textView.setVisibility(View.GONE);
             recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
             recyclerView.setAdapter(new ImageAdapter(MainActivity.this,imagesList));
         } catch (Exception e) {
