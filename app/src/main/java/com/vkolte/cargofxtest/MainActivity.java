@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.vkolte.cargofxtest.databinding.ActivityMainBinding;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -23,20 +25,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private ActivityMainBinding binding;
     ImagesInterface service;
-    TextView textView;
-    private RecyclerView recyclerView;
-    private ProgressBar progressBar;
+    private int page = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
 
-        textView = findViewById(R.id.showError);
-        recyclerView = findViewById(R.id.recyclerView);
-        progressBar = findViewById(R.id.progressBar);
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.thecatapi.com/v1/images/") //https://api.thecatapi.com/v1/images/search?limit=100&page=11&order=Desc
                 .addConverterFactory(GsonConverterFactory.create())
@@ -44,14 +43,25 @@ public class MainActivity extends AppCompatActivity {
 
         service = retrofit.create(ImagesInterface.class);
 
-        callApi();
+        callApi(page);
+
+        binding.text1.setOnClickListener(v -> {
+            page = page - 1;
+            callApi(page);
+        });
+
+        binding.text5.setOnClickListener(v -> {
+            page = page + 1;
+            callApi(page);
+        });
 
     }
 
-    private void callApi() {
+    private void callApi(int page) {
 
         try {
-            Call<List<Images>> call = service.getImages("100","10","Desc");
+            binding.progressBar.setVisibility(View.VISIBLE);
+            Call<List<Images>> call = service.getImages("5", String.valueOf(page), "Desc");
 
             call.enqueue(new Callback<List<Images>>() {
                 @Override
@@ -59,39 +69,39 @@ public class MainActivity extends AppCompatActivity {
                     if (response.isSuccessful()) {
                         List<Images> imagesList = response.body();
                         parseRecyclerView(imagesList);
-                    }else{
-                        recyclerView.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.GONE);
-                        textView.setVisibility(View.VISIBLE);
-                        textView.setText("Something went Wrong : "+response.message());
+                    } else {
+                        binding.recyclerView.setVisibility(View.GONE);
+                        binding.progressBar.setVisibility(View.GONE);
+                        binding.showError.setVisibility(View.VISIBLE);
+                        binding.showError.setText("Something went Wrong : " + response.message());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<List<Images>> call, Throwable t) {
-                    try{
-                        recyclerView.setVisibility(View.GONE);
-                        progressBar.setVisibility(View.GONE);
-                        textView.setVisibility(View.VISIBLE);
-                        textView.setText(t.getMessage());
+                    try {
+                        binding.recyclerView.setVisibility(View.GONE);
+                        binding.progressBar.setVisibility(View.GONE);
+                        binding.showError.setVisibility(View.VISIBLE);
+                        binding.showError.setText(t.getMessage());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "callApi: Exception : "+e.getMessage());
+            Log.e(TAG, "callApi: Exception : " + e.getMessage());
         }
     }
 
     private void parseRecyclerView(List<Images> imagesList) {
 
-        try{
-            recyclerView.setVisibility(View.VISIBLE);
-            progressBar.setVisibility(View.GONE);
-            textView.setVisibility(View.GONE);
-            recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
-            recyclerView.setAdapter(new ImageAdapter(MainActivity.this,imagesList));
+        try {
+            binding.recyclerView.setVisibility(View.VISIBLE);
+            binding.progressBar.setVisibility(View.GONE);
+            binding.showError.setVisibility(View.GONE);
+            binding.recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+            binding.recyclerView.setAdapter(new ImageAdapter(MainActivity.this, imagesList));
         } catch (Exception e) {
             e.printStackTrace();
         }
